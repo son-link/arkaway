@@ -34,10 +34,23 @@ class Ball():
         # Vamos a comprobar si choca contra el pad
         if (
             self.posyy + VELY >= 130 and
-            self.posy < 128 and
-            self.posx >= self.paddle.posx and
-            self.posxx <= self.paddle.posx + 16
+            self.posy < 132 and
+            self.posxx >= self.paddle.posx and
+            self.posx <= self.paddle.posx + 16
         ):
+            if (
+                self.posyy + VELY >= 130 and
+                self.posxx >= self.paddle.posx and
+                self.posxx <= self.paddle.posx + 8
+            ):
+                self.velx = 0 - VELX
+            elif (
+                self.posyy + VELY >= 130 and
+                self.posx >= self.paddle.posx + 8 and
+                self.posx <= self.paddle.posx + 16
+            ):
+                self.velx = VELX
+
             self.vely = 0 - VELY
 
         # Comprobamos si esta llegando a algún sprite
@@ -132,9 +145,17 @@ class Paddle():
         pyxel.blt(self.posx, self.posy, 0, 40, 8, 16, 4)
 
     def update(self):
-        if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT) and self.posx > 8:
+        if (
+            pyxel.btn(pyxel.KEY_LEFT) or
+            pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT) and
+            self.posx > 8
+        ):
             self.posx -= 2
-        elif pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT) and self.posx > 8:
+        elif (
+            pyxel.btn(pyxel.KEY_RIGHT) or
+            pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT) and
+            self.posx > 8
+        ):
             self.posx += 2
 
     def getPosition(self):
