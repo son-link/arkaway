@@ -32,6 +32,7 @@ class Ball():
 
     def update(self):
         # Vamos a comprobar si choca contra el pad
+
         if (
             self.posyy + VELY >= 130 and
             self.posy < 132 and
@@ -146,15 +147,19 @@ class Paddle():
 
     def update(self):
         if (
-            pyxel.btn(pyxel.KEY_LEFT) or
-            pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT) and
+            (
+                pyxel.btn(pyxel.KEY_LEFT) or
+                pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT)
+            ) and
             self.posx > 8
         ):
             self.posx -= 2
         elif (
-            pyxel.btn(pyxel.KEY_RIGHT) or
-            pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT) and
-            self.posx > 8
+            (
+                pyxel.btn(pyxel.KEY_RIGHT) or
+                pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT)
+            ) and
+            self.posx + 16 < SCREEN_W - 8
         ):
             self.posx += 2
 
