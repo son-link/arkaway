@@ -18,8 +18,8 @@ SCREEN_H = 144
 
 class Ball():
     def __init__(self, paddle):
-        self.velx = 0 - VELX
-        self.vely = 0 - VELY
+        self.velx = -VELX
+        self.vely = -VELY
         self.posx = (SCREEN_W / 2) - 2
         self.posy = 124
         self.posxx = self.posx + 4
@@ -32,19 +32,18 @@ class Ball():
 
     def update(self):
         # Vamos a comprobar si choca contra el pad
-
         if (
-            self.posyy + VELY >= 130 and
+            self.posyy + self.vely >= 130 and
             self.posy < 132 and
             self.posxx >= self.paddle.posx and
             self.posx <= self.paddle.posx + 16
         ):
             if (
-                self.posyy + VELY >= 130 and
+                self.posyy + self.vely >= 130 and
                 self.posxx >= self.paddle.posx and
                 self.posxx <= self.paddle.posx + 8
             ):
-                self.velx = 0 - VELX
+                self.velx = -VELX
             elif (
                 self.posyy + VELY >= 130 and
                 self.posx >= self.paddle.posx + 8 and
@@ -52,18 +51,30 @@ class Ball():
             ):
                 self.velx = VELX
 
-            self.vely = 0 - VELY
+            if (
+                self.posxx <= self.paddle.posx + 4 or
+                self.posx >= self.paddle.posx + 12
+            ):
+                self.vely = -1
+            else:
+                self.vely = -VELY
 
         # Comprobamos si esta llegando a algún sprite
         cols, tiles = self._checkColDir()
         if len(cols) > 0:
             for col in cols:
                 if col == COL_TOP:
-                    self.vely = 0 - VELY
+                    if self.vely == 1:
+                        self.vely = -1
+                    else:
+                        self.vely = -VELY
                 if col == COL_BOTTOM:
-                    self.vely = VELY
+                    if self.vely == -1:
+                        self.vely = 1
+                    else:
+                        self.vely = VELY
                 if col == COL_LEFT:
-                    self.velx = 0 - VELX
+                    self.velx = -VELX
                 if col == COL_RIGHT:
                     self.velx = VELX
 
