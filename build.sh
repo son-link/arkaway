@@ -11,4 +11,6 @@ cd ..
 echo "To HTML"
 pyxel app2html arkaway.pyxapp
 mv arkaway.html index.html
+echo "Clean"
+rm -r package
 echo "End"

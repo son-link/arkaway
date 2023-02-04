@@ -1,5 +1,6 @@
 import pyxel
-from random import randint
+import json
+# from random import randint
 
 example = []
 
@@ -13,19 +14,18 @@ COL_RIGHT = 4
 COL_PADDLE = 5
 LIVES = 3
 SCREEN_W = 120
-SCREEN_H = 144
+SCREEN_H = 160
 
 
 class Ball():
     def __init__(self, paddle):
+        self.paddle = paddle
         self.velx = -VELX
         self.vely = -VELY
         self.posx = (SCREEN_W / 2) - 2
-        self.posy = 124
+        self.posy = self.paddle.posy - 4
         self.posxx = self.posx + 4
         self.posyy = self.posy + 4
-
-        self.paddle = paddle
 
     def draw(self):
         pyxel.blt(self.posx, self.posy, 0, 32, 8, 4, 4)
@@ -33,19 +33,17 @@ class Ball():
     def update(self):
         # Vamos a comprobar si choca contra el pad
         if (
-            self.posyy + self.vely >= 130 and
-            self.posy < 132 and
+            self.posyy >= self.paddle.posy and
+            self.posy < self.paddle.posy + 4 and
             self.posxx >= self.paddle.posx and
             self.posx <= self.paddle.posx + 16
         ):
             if (
-                self.posyy + self.vely >= 130 and
                 self.posxx >= self.paddle.posx and
                 self.posxx <= self.paddle.posx + 8
             ):
                 self.velx = -VELX
             elif (
-                self.posyy + VELY >= 130 and
                 self.posx >= self.paddle.posx + 8 and
                 self.posx <= self.paddle.posx + 16
             ):
@@ -81,7 +79,7 @@ class Ball():
             for tile in tiles:
                 tile_x, tile_y = tile
                 _tile = self._checkTile(tile_x, tile_y)
-                if _tile and _tile[0] >= 1 and _tile[1] == 0:
+                if _tile and _tile[0] >= 1 and _tile[0] < 12 and _tile[1] == 0:
                     x = pyxel.floor(tile_x / 8)
                     y = pyxel.floor(tile_y / 8)
                     example[y - 3][x - 1] = 0
@@ -104,7 +102,7 @@ class Ball():
         self.velx = 0 - VELX
         self.vely = 0 - VELY
         self.posx = (SCREEN_W / 2) - 2
-        self.posy = 124
+        self.posy = self.paddle.posy - 4
         self.posxx = self.posx + 4
         self.posyy = self.posy + 4
 
@@ -151,7 +149,7 @@ class Ball():
 class Paddle():
     def __init__(self):
         self.posx = (SCREEN_W / 2) - 8
-        self.posy = 128
+        self.posy = SCREEN_H - 16
 
     def draw(self):
         pyxel.blt(self.posx, self.posy, 0, 40, 8, 16, 4)
@@ -179,7 +177,6 @@ class Paddle():
 
     def resetPos(self):
         self.posx = (SCREEN_W / 2) - 8
-        self.posy = 128
 
 
 class App():
@@ -191,7 +188,12 @@ class App():
         self.game_state = 1
         self.move_ball = False
 
-        pyxel.init(120, 144, title="Arkaway", display_scale=3)
+        self.maps = {}
+
+        with open('maps.json') as maps:
+            self.maps = json.load(maps)
+
+        pyxel.init(SCREEN_W, SCREEN_H, title="Arkaway", display_scale=3)
         pyxel.load('assets.pyxres')
         pyxel.run(self.update, self.draw)
 
@@ -230,15 +232,15 @@ class App():
                 self.ball.setPosition(padPos[0] + 6, padPos[1] - 4)
 
     def draw(self):
-        tile_y = 3
-        tile_x = 1
         pyxel.cls(0)
 
         if self.game_state == 1:
             pyxel.text((SCREEN_W / 2) - 15, 32, 'ARKAWAY', 10)
             pyxel.text(8, 48, 'Press Space key or A button to start', 3)
         elif self.game_state == 2:
-            pyxel.bltm(0, 0, 0, 0, 0, 120, 144)
+            tile_y = 3
+            tile_x = 1
+            pyxel.bltm(0, 0, 0, 0, 0, 120, SCREEN_H)
             pyxel.text(4, 4, 'LIVES', 9)
             lives_start = 32
 
@@ -262,13 +264,14 @@ class App():
 
     def genWalls(self):
         global example
-        example = []
-        for y in range(6):
+        example = self.maps[0]
+
+        '''for y in range(6):
             line = []
             for x in range(13):
                 line.append(randint(1, 11))
 
-            example.append(line)
+            example.append(line)'''
 
 
 App()
