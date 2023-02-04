@@ -1,8 +1,5 @@
 import pyxel
 import json
-# from random import randint
-
-example = []
 
 # Constantes del juego
 VELX = 2
@@ -15,6 +12,9 @@ COL_PADDLE = 5
 LIVES = 3
 SCREEN_W = 120
 SCREEN_H = 160
+
+# Aquí se almacena el mapa actual
+cur_map = []
 
 
 class Ball():
@@ -82,7 +82,7 @@ class Ball():
                 if _tile and _tile[0] >= 1 and _tile[0] < 12 and _tile[1] == 0:
                     x = pyxel.floor(tile_x / 8)
                     y = pyxel.floor(tile_y / 8)
-                    example[y - 3][x - 1] = 0
+                    cur_map[y - 3][x - 1] = 0
 
         self.posx += self.velx
         self.posxx += self.velx
@@ -248,9 +248,9 @@ class App():
                 pyxel.blt(lives_start, 3, 0, 56, 8, 8, 8)
                 lives_start += 8
 
-            for y in range(len(example)):
+            for y in range(len(cur_map)):
                 for x in range(13):
-                    sprite = example[y][x]
+                    sprite = cur_map[y][x]
                     pyxel.tilemap(0).pset(tile_x, tile_y, (sprite, 0))
                     tile_x += 1
 
@@ -263,15 +263,8 @@ class App():
             pyxel.text((SCREEN_W / 2) - 18, 32, 'GAME OVER', 8)
 
     def genWalls(self):
-        global example
-        example = self.maps[0]
-
-        '''for y in range(6):
-            line = []
-            for x in range(13):
-                line.append(randint(1, 11))
-
-            example.append(line)'''
+        global cur_map
+        cur_map = self.maps[0]
 
 
 App()
