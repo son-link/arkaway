@@ -186,6 +186,7 @@ class App():
     def __init__(self):
         self.paddle = Paddle()
         self.ball = Ball(self.paddle)
+        self.best_score = 0
 
         # 1: Pantalla de inicio. 2: Jugando. 3: Muerte
         self.game_state = 1
@@ -268,6 +269,7 @@ class App():
             pyxel.text(8, 48, 'Press Space key or A button to start', 3)
             pyxel.text(2, 60, 'Left or Right to select level', 3)
             pyxel.text(8, 72, f'Level: {self.level + 1}', 3)
+            pyxel.text(8, 80, f'Best Score: {self.best_score}', 3)
         elif self.game_state == 2:
             tile_y = 3
             tile_x = 1
@@ -306,12 +308,11 @@ class App():
             save.close()
 
     def getScore(self):
-        global score
         try:
             with open('score.txt', 'r') as f:
-                score = int(f.readline())
+                self.best_score = int(f.readline())
         except FileNotFoundError:
-            score = 0
+            self.best_score = 0
 
 
 App()
