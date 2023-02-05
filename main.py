@@ -187,6 +187,7 @@ class App():
         # 1: Pantalla de inicio. 2: Jugando. 3: Muerte
         self.game_state = 1
         self.move_ball = False
+        self.level = 0
 
         self.maps = {}
 
@@ -214,7 +215,7 @@ class App():
 
         if pyxel.btnp(pyxel.KEY_SPACE) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A):
             if self.game_state == 1:
-                self.genWalls()
+                self.setMap()
                 self.game_state = 2
             elif self.game_state == 2 and not self.move_ball:
                 self.move_ball = True
@@ -222,6 +223,25 @@ class App():
                 LIVES = 3
                 self.game_state = 1
                 self.move_ball = False
+
+        if self.game_state == 1:
+            if (
+                pyxel.btnp(pyxel.KEY_LEFT) or
+                pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT)
+            ):
+                if self.level > 0:
+                    self.level -= 1
+                else:
+                    self.level = len(self.maps) - 1
+
+            if (
+                pyxel.btnp(pyxel.KEY_RIGHT) or
+                pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT)
+            ):
+                if self.level < len(self.maps) - 1:
+                    self.level += 1
+                else:
+                    self.level = 0
 
         if self.game_state == 2:
             self.paddle.update()
@@ -237,6 +257,8 @@ class App():
         if self.game_state == 1:
             pyxel.text((SCREEN_W / 2) - 15, 32, 'ARKAWAY', 10)
             pyxel.text(8, 48, 'Press Space key or A button to start', 3)
+            pyxel.text(2, 60, 'Left or Right to select level', 3)
+            pyxel.text(8, 72, f'Level: {self.level + 1}', 3)
         elif self.game_state == 2:
             tile_y = 3
             tile_x = 1
@@ -262,9 +284,9 @@ class App():
         elif self.game_state == 3:
             pyxel.text((SCREEN_W / 2) - 18, 32, 'GAME OVER', 8)
 
-    def genWalls(self):
+    def setMap(self):
         global cur_map
-        cur_map = self.maps[0]
+        cur_map = self.maps[self.level]
 
 
 App()
