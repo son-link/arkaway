@@ -15,6 +15,7 @@ SCREEN_H = 160
 
 # Aquí se almacena el mapa actual
 cur_map = []
+score = 0
 
 
 class Ball():
@@ -31,6 +32,7 @@ class Ball():
         pyxel.blt(self.posx, self.posy, 0, 32, 8, 4, 4)
 
     def update(self):
+        global score
         # Vamos a comprobar si choca contra el pad
         if (
             self.posyy >= self.paddle.posy and
@@ -83,6 +85,7 @@ class Ball():
                     x = pyxel.floor(tile_x / 8)
                     y = pyxel.floor(tile_y / 8)
                     cur_map[y - 3][x - 1] = 0
+                    score += 10
 
         self.posx += self.velx
         self.posxx += self.velx
@@ -194,6 +197,8 @@ class App():
         with open('maps.json') as maps:
             self.maps = json.load(maps)
 
+        self.getScore()
+
         pyxel.init(SCREEN_W, SCREEN_H, title="Arkaway", display_scale=3)
         pyxel.load('assets.pyxres')
         pyxel.run(self.update, self.draw)
@@ -251,7 +256,11 @@ class App():
                 padPos = self.paddle.getPosition()
                 self.ball.setPosition(padPos[0] + 6, padPos[1] - 4)
 
+        if self.game_state == 3:
+            self.saveScore()
+
     def draw(self):
+        global score
         pyxel.cls(0)
 
         if self.game_state == 1:
@@ -263,11 +272,13 @@ class App():
             tile_y = 3
             tile_x = 1
             pyxel.bltm(0, 0, 0, 0, 0, 120, SCREEN_H)
-            pyxel.text(4, 4, 'LIVES', 9)
+            pyxel.text(2, 2, 'LIVES', 9)
+            pyxel.text(2, 10, f'SCORE: {score}', 9)
+            pyxel.text(SCREEN_W - 36, 2, f'LEVEL: 0{self.level + 1}', 9)
             lives_start = 32
 
             for i in range(LIVES):
-                pyxel.blt(lives_start, 3, 0, 56, 8, 8, 8)
+                pyxel.blt(lives_start, 1, 0, 56, 8, 8, 8)
                 lives_start += 8
 
             for y in range(len(cur_map)):
@@ -287,6 +298,20 @@ class App():
     def setMap(self):
         global cur_map
         cur_map = self.maps[self.level]
+
+    def saveScore(self):
+        global score
+        with open('score.txt', 'w') as save:
+            save.write(str(score))
+            save.close()
+
+    def getScore(self):
+        global score
+        try:
+            with open('score.txt', 'r') as f:
+                score = int(f.readline())
+        except FileNotFoundError:
+            score = 0
 
 
 App()
