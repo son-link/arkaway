@@ -8,6 +8,8 @@ A WIP (Work In Progress) Arkanoid clone make with [Pyxel](https://github.com/kit
 
 [Download](https://github.com/son-link/arkaway/releases)
 
+Also available on [Itch](https://son-link.itch.io/arkaway)
+
 ## How to play:
 
 * Move: Left and right arrows keys
