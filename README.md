@@ -6,7 +6,7 @@ A WIP (Work In Progress) Arkanoid clone make with [Pyxel](https://github.com/kit
 
 [Play online](https://son-link.github.io/arkaway)
 
-Linux and Windows executables will be available soon
+[Download](https://github.com/son-link/arkaway/releases)
 
 ## How to play:
 
