@@ -269,6 +269,17 @@ class App():
                 padPos = self.paddle.getPosition()
                 self.ball.setPosition(padPos[0] + 6, padPos[1] - 4)
 
+            level_complete = self.levelComplete()
+            if level_complete:
+                if self.level < len(self.maps) - 1:
+                    self.ball.resetBall()
+                    self.paddle.resetPos()
+                    self.level += 1
+                    self.setMap()
+                    self.move_ball = False
+                else:
+                    self.game_state = 3
+
         if self.game_state == 3:
             self.saveScore()
 
@@ -329,6 +340,21 @@ class App():
                 self.best_score = int(f.readline())
         except FileNotFoundError:
             self.best_score = 0
+
+    def levelComplete(self):
+        global cur_map
+
+        no_empty_tiles = 0
+
+        for y in range(len(cur_map)):
+            for x in range(13):
+                sprite = cur_map[y][x]
+                if sprite > 0 and sprite < 12:
+                    no_empty_tiles += 1
+
+        if no_empty_tiles > 0:
+            return False
+        return True
 
 
 App()
