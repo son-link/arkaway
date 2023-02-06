@@ -1,6 +1,6 @@
 import pyxel
 import json
-
+from os import path
 # Constantes del juego
 VELX = 2
 VELY = 2
@@ -18,6 +18,14 @@ cur_map = []
 score = 0
 
 
+def centerText(text, posy, color):
+    '''Centra un texto en pantalla'''
+    pyxel.text(
+        (SCREEN_W / 2) - ((len(text) * 4) / 2),
+        posy, text, color
+    )
+
+
 class Ball():
     def __init__(self, paddle):
         self.paddle = paddle
@@ -29,7 +37,7 @@ class Ball():
         self.posyy = self.posy + 4
 
     def draw(self):
-        pyxel.blt(self.posx, self.posy, 0, 32, 8, 4, 4)
+        pyxel.blt(self.posx, self.posy, 0, 32, 8, 4, 4, 0)
 
     def update(self):
         global score
@@ -114,7 +122,10 @@ class Ball():
         tile_y = pyxel.floor(posy / 8)
 
         tile = pyxel.tilemap(0).pget(tile_x, tile_y)
-        if tile[0] == 0 and tile[1] == 0:
+        if (
+            (tile[0] == 0 and tile[1] == 0) or
+            (tile[0] == 8 and tile[1] == 1)
+        ):
             return
 
         return tile
@@ -155,7 +166,7 @@ class Paddle():
         self.posy = SCREEN_H - 16
 
     def draw(self):
-        pyxel.blt(self.posx, self.posy, 0, 40, 8, 16, 4)
+        pyxel.blt(self.posx, self.posy, 0, 40, 8, 16, 4, 0)
 
     def update(self):
         if (
@@ -195,7 +206,8 @@ class App():
 
         self.maps = {}
 
-        with open('maps.json') as maps:
+        __dir = path.realpath(path.dirname(__file__))
+        with open(__dir + '/maps.json') as maps:
             self.maps = json.load(maps)
 
         self.getScore()
@@ -265,11 +277,12 @@ class App():
         pyxel.cls(0)
 
         if self.game_state == 1:
-            pyxel.text((SCREEN_W / 2) - 15, 32, 'ARKAWAY', 10)
-            pyxel.text(8, 48, 'Press Space key or A button to start', 3)
-            pyxel.text(2, 60, 'Left or Right to select level', 3)
-            pyxel.text(8, 72, f'Level: {self.level + 1}', 3)
-            pyxel.text(8, 80, f'Best Score: {self.best_score}', 3)
+            centerText('ARKAWAY', 32, 10)
+            centerText('Press Space key or', 48, 3)
+            centerText('A button to start', 56, 3)
+            centerText('Left or Right to select level', 64, 3)
+            centerText(f'Level: {self.level + 1}', 78, 3)
+            centerText(f'Best Score: {self.best_score}', 86, 3)
         elif self.game_state == 2:
             tile_y = 3
             tile_x = 1
@@ -286,7 +299,10 @@ class App():
             for y in range(len(cur_map)):
                 for x in range(13):
                     sprite = cur_map[y][x]
-                    pyxel.tilemap(0).pset(tile_x, tile_y, (sprite, 0))
+                    if sprite == 0:
+                        pyxel.tilemap(0).pset(tile_x, tile_y, (8, 1))
+                    else:
+                        pyxel.tilemap(0).pset(tile_x, tile_y, (sprite, 0))
                     tile_x += 1
 
                 tile_x = 1
