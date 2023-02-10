@@ -37,7 +37,7 @@ class Ball():
         self.posyy = self.posy + 4
 
     def draw(self):
-        pyxel.blt(self.posx, self.posy, 0, 32, 8, 4, 4, 0)
+        pyxel.blt(self.posx, self.posy, 0, 40, 8, 4, 4, 0)
 
     def update(self):
         global score
@@ -46,7 +46,7 @@ class Ball():
             self.posyy >= self.paddle.posy and
             self.posy < self.paddle.posy + 4 and
             self.posxx >= self.paddle.posx and
-            self.posx <= self.paddle.posx + 16
+            self.posx <= self.paddle.posx + (self.paddle.size * 8)
         ):
             if (
                 self.posxx >= self.paddle.posx and
@@ -55,7 +55,7 @@ class Ball():
                 self.velx = -VELX
             elif (
                 self.posx >= self.paddle.posx + 8 and
-                self.posx <= self.paddle.posx + 16
+                self.posx <= self.paddle.posx + (self.paddle.size * 8)
             ):
                 self.velx = VELX
 
@@ -124,7 +124,7 @@ class Ball():
         tile = pyxel.tilemap(0).pget(tile_x, tile_y)
         if (
             (tile[0] == 0 and tile[1] == 0) or
-            (tile[0] == 8 and tile[1] == 1)
+            (tile[0] == 7 and tile[1] == 1)
         ):
             return
 
@@ -164,9 +164,14 @@ class Paddle():
     def __init__(self):
         self.posx = (SCREEN_W / 2) - 8
         self.posy = SCREEN_H - 16
+        self.size = 3  # 1: Small, 2: normal, 3: big
 
     def draw(self):
-        pyxel.blt(self.posx, self.posy, 0, 40, 8, 16, 4, 0)
+        pyxel.blt(
+            self.posx, self.posy, 0, 32,
+            8 + ((self.size - 1) * 4),
+            8 * self.size,  4, 0
+        )
 
     def update(self):
         if (
@@ -288,30 +293,32 @@ class App():
         pyxel.cls(0)
 
         if self.game_state == 1:
-            centerText('ARKAWAY', 32, 10)
-            centerText('Press Space key or', 48, 3)
-            centerText('A button to start', 56, 3)
-            centerText('Left or Right to select level', 64, 3)
-            centerText(f'Level: {self.level + 1}', 78, 3)
-            centerText(f'Best Score: {self.best_score}', 86, 3)
+            # centerText('ARKAWAY', 32, 10)
+            pyxel.bltm(0, 0, 1, 0, 0, SCREEN_W, SCREEN_H)
+
+            centerText('Press Space key or', 52, 10)
+            centerText('A button to start', 60, 10)
+            centerText('Left or Right to select level', 68, 10)
+            centerText(f'Level: {self.level + 1}', 82, 10)
+            centerText(f'Best Score: {self.best_score}', 90, 10)
         elif self.game_state == 2:
             tile_y = 3
             tile_x = 1
-            pyxel.bltm(0, 0, 0, 0, 0, 120, SCREEN_H)
+            pyxel.bltm(0, 0, 0, 0, 0, SCREEN_W, SCREEN_H)
             pyxel.text(2, 2, 'LIVES', 9)
             pyxel.text(2, 10, f'SCORE: {score}', 9)
             pyxel.text(SCREEN_W - 36, 2, f'LEVEL: 0{self.level + 1}', 9)
-            lives_start = 32
+            lives_start = 24
 
             for i in range(LIVES):
-                pyxel.blt(lives_start, 1, 0, 56, 8, 8, 8)
+                pyxel.blt(lives_start, 1, 0, 48, 8, 8, 8)
                 lives_start += 8
 
             for y in range(len(cur_map)):
                 for x in range(13):
                     sprite = cur_map[y][x]
                     if sprite == 0:
-                        pyxel.tilemap(0).pset(tile_x, tile_y, (8, 1))
+                        pyxel.tilemap(0).pset(tile_x, tile_y, (7, 1))
                     else:
                         pyxel.tilemap(0).pset(tile_x, tile_y, (sprite, 0))
                     tile_x += 1
