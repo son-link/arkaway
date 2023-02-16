@@ -52,6 +52,8 @@ class Ball():
             self.posxx >= self.paddle.posx and
             self.posx <= self.paddle.posx + (self.paddle.size * 8)
         ):
+            pyxel.play(0, 0)
+
             if (
                 self.posxx >= self.paddle.posx and
                 self.posxx <= self.paddle.posx + 8
@@ -95,6 +97,7 @@ class Ball():
 
                 _tile = self._checkTile(tile_x, tile_y)
                 if _tile and _tile[0] >= 1 and _tile[0] < 12 and _tile[1] == 0:
+                    pyxel.play(0, 1)
                     x = pyxel.floor(tile_x / 8)
 
                     if self.game_mode == 2:
@@ -103,6 +106,8 @@ class Ball():
                     y = pyxel.floor(tile_y / 8)
                     cur_map[y - 3][x - 1] = 0
                     score += 10
+                else:
+                    pyxel.play(0, 0)
 
         self.posx += self.velx
         self.posxx += self.velx
@@ -263,7 +268,7 @@ class App():
         pyxel.run(self.update, self.draw)
 
     def update(self):
-        global lives, score
+        global lives, score, cur_map
 
         # Primero comprobamos si la bola se sale por abajo
         if self.move_ball:
@@ -300,6 +305,7 @@ class App():
                 lives = 3
                 self.game_state = 1
                 self.move_ball = False
+                cur_map = []
 
         if self.game_state == 1:
 
