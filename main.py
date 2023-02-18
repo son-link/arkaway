@@ -1,5 +1,6 @@
 import pyxel
 import json
+import copy
 from os import path
 from random import randint
 
@@ -44,7 +45,7 @@ class Ball():
         pyxel.blt(self.posx, self.posy, 0, 40, 8, 4, 4, 0)
 
     def update(self):
-        global score
+        global score, cur_map
         # Vamos a comprobar si choca contra el pad
         if (
             self.posyy >= self.paddle.posy and
@@ -247,6 +248,7 @@ class App():
         # 1: Normal. 2: Infinite
         self.game_mode = 1
         self.move_ball = False
+        self.paused = False
         self.level = 0
 
         self.maps = {}
@@ -263,7 +265,7 @@ class App():
         self.getScore()
 
         pyxel.init(SCREEN_W, SCREEN_H, title="Arkaway", display_scale=3,
-                   capture_scale=3, capture_sec=20)
+                   capture_scale=3, capture_sec=20, quit_key=pyxel.KEY_Q)
         pyxel.load('assets.pyxres')
         pyxel.run(self.update, self.draw)
 
@@ -271,7 +273,7 @@ class App():
         global lives, score, cur_map
 
         # Primero comprobamos si la bola se sale por abajo
-        if self.move_ball:
+        if self.move_ball and not self.paused:
             ballPos = self.ball.getPosition()
             if ballPos[1] >= SCREEN_H:
                 lives = lives - 1
@@ -285,11 +287,11 @@ class App():
 
         if pyxel.btnp(pyxel.KEY_SPACE) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A):
             if self.game_state == 1:
-                self.paddle = Paddle(self.game_mode)
-                self.ball = Ball(self.paddle, self.game_mode)
-                self.paddle.vel = VELX
+                self.reset()
                 self.start_frame = pyxel.frame_count
+
                 if self.game_mode == 1:
+                    self.level = 0
                     self.setMap()
                     self.line_len = 13
                 else:
@@ -302,6 +304,8 @@ class App():
             elif self.game_state == 2 and not self.move_ball:
                 self.move_ball = True
             elif self.game_state == 3:
+                self.ball = None
+                self.paddle = None
                 lives = 3
                 self.game_state = 1
                 self.move_ball = False
@@ -329,7 +333,7 @@ class App():
 
             self.sel_cur_pos = 57 + (self.game_mode * 8)
 
-            if (
+            '''if (
                 pyxel.btnp(pyxel.KEY_LEFT) or
                 pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT)
             ):
@@ -345,28 +349,51 @@ class App():
                 if self.level < len(self.maps) - 1:
                     self.level += 1
                 else:
-                    self.level = 0
+                    self.level = 0'''
 
         if self.game_state == 2:
-            self.paddle.update()
+            if (
+                pyxel.btnp(pyxel.KEY_RETURN) or
+                pyxel.btnp(pyxel.GAMEPAD1_BUTTON_START)
+            ):
+                if self.paused:
+                    self.paused = False
+                else:
+                    self.paused = True
+
+            if self.paused and (
+                (
+                    pyxel.btn(pyxel.KEY_ESCAPE) or
+                    pyxel.btn(pyxel.GAMEPAD1_BUTTON_BACK)
+                )
+            ):
+                self.level = 0
+                self.reset()
+                self.game_mode = 1
+                self.game_state = 1
+                self.paused = False
+
+            if not self.paused:
+                self.paddle.update()
+
             if self.move_ball:
-                self.ball.update()
+                if not self.paused:
+                    self.ball.update()
             else:
                 padPos = self.paddle.getPosition()
                 self.ball.setPosition(padPos[0] + 6, padPos[1] - 4)
 
             level_complete = self.levelComplete()
-            if level_complete and self.game_mode == 1:
+            if level_complete and self.game_mode == 1 and self.game_state == 2:
                 if self.level < len(self.maps) - 1:
-                    self.ball.resetBall()
-                    self.paddle.resetPos()
                     self.level += 1
+                    self.reset()
                     self.setMap()
-                    self.move_ball = False
                 else:
                     self.game_state = 3
+                    self.reset()
 
-            if self.game_mode == 2 and self.move_ball:
+            if self.game_mode == 2 and self.move_ball and not self.paused:
                 if (pyxel.frame_count - self.start_frame) % self.newLineAt == 0:
                     self.genRandLine()
 
@@ -444,12 +471,19 @@ class App():
 
             self.ball.draw()
             self.paddle.draw()
+
+            if self.paused:
+                pyxel.rect((SCREEN_W/2) - 20, 56, 40, 16, 0)
+                centerText('PAUSE', 62, 9)
+                # centerText('Enter/Start: Continue', 58, 9)
+
         elif self.game_state == 3:
             pyxel.text((SCREEN_W / 2) - 18, 32, 'GAME OVER', 8)
 
     def setMap(self):
         global cur_map
-        cur_map = self.maps[self.level]
+        cur_map = copy.deepcopy(self.maps[self.level])
+        self.ball.cur_map = cur_map
 
     def saveScore(self):
         global score
@@ -466,7 +500,6 @@ class App():
 
     def levelComplete(self):
         global cur_map
-
         no_empty_tiles = 0
 
         for y in range(len(cur_map)):
@@ -487,6 +520,31 @@ class App():
             line.append(randint(1, 11))
 
         cur_map.insert(0, line)
+
+    def reset(self):
+        global cur_map
+        tile_y = 3
+
+        for y in range(len(cur_map)):
+            tile_x = 1
+            if self.game_mode == 2:
+                tile_x = 3
+
+            for x in range(self.line_len):
+                if self.game_mode == 1:
+                    pyxel.tilemap(0).pset(x + tile_x, tile_y, (7, 1))
+                else:
+                    pyxel.tilemap(2).pset(x + tile_x, tile_y, (7, 1))
+
+            tile_y += 1
+
+        cur_map = []
+        self.paddle = Paddle(self.game_mode)
+        self.ball = Ball(self.paddle, self.game_mode)
+        self.paddle.vel = VELX
+        self.ball.resetBall()
+        self.paddle.resetPos()
+        self.move_ball = False
 
 
 App()
