@@ -333,24 +333,6 @@ class App():
 
             self.sel_cur_pos = 57 + (self.game_mode * 8)
 
-            '''if (
-                pyxel.btnp(pyxel.KEY_LEFT) or
-                pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT)
-            ):
-                if self.level > 0:
-                    self.level -= 1
-                else:
-                    self.level = len(self.maps) - 1
-
-            if (
-                pyxel.btnp(pyxel.KEY_RIGHT) or
-                pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT)
-            ):
-                if self.level < len(self.maps) - 1:
-                    self.level += 1
-                else:
-                    self.level = 0'''
-
         if self.game_state == 2:
             if (
                 pyxel.btnp(pyxel.KEY_RETURN) or
