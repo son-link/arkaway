@@ -242,14 +242,14 @@ class App():
         self.ball = None
         self.best_score = 0
 
-        # 1: Pantalla de inicio. 2: Jugando. 3: Muerte
+        # 1: Main Screen. 2: Playing. 3: Game Over. 4: Win screen
         self.game_state = 1
 
-        # 1: Normal. 2: Infinite
+        # 1: Normal. 2: Endless
         self.game_mode = 1
         self.move_ball = False
         self.paused = False
-        self.level = 0
+        self.level = 1
 
         self.maps = {}
 
@@ -287,7 +287,7 @@ class App():
 
         if (
             pyxel.btnp(pyxel.KEY_SPACE) or
-            (pyxel.btnp(pyxel.KEY_RETURN) and self.game_state == 1) or
+            (pyxel.btnp(pyxel.KEY_RETURN) and self.game_state != 2) or
             pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A)
         ):
             if self.game_state == 1:
@@ -295,7 +295,7 @@ class App():
                 self.start_frame = pyxel.frame_count
 
                 if self.game_mode == 1:
-                    self.level = 0
+                    self.level = 2
                     self.setMap()
                     self.line_len = 13
                 else:
@@ -307,13 +307,13 @@ class App():
                 self.game_state = 2
             elif self.game_state == 2 and not self.move_ball:
                 self.move_ball = True
-            elif self.game_state == 3:
+            elif self.game_state == 3 or self.game_state == 4:
                 self.ball = None
                 self.paddle = None
                 lives = 3
-                self.game_state = 1
                 self.move_ball = False
                 cur_map = []
+                self.game_state = 1
 
             return
 
@@ -378,7 +378,7 @@ class App():
                     self.reset()
                     self.setMap()
                 else:
-                    self.game_state = 3
+                    self.game_state = 4
                     self.reset()
 
             if self.game_mode == 2 and self.move_ball and not self.paused:
@@ -388,7 +388,7 @@ class App():
                 if score > 0 and score % 500 == 0 and self.newLineAt > 60:
                     self.newLineAt -= 15
 
-        if self.game_state == 3:
+        if self.game_state == 3 or self.game_state == 4:
             self.saveScore()
 
     def draw(self):
@@ -466,7 +466,19 @@ class App():
                 # centerText('Enter/Start: Continue', 58, 9)
 
         elif self.game_state == 3:
-            pyxel.text((SCREEN_W / 2) - 18, 32, 'GAME OVER', 8)
+            pyxel.bltm(0, 0, 1, 0, 0, SCREEN_W, 32)
+            centerText('GAME OVER', 40, 8)
+            centerText(f'SCORE: {score}', 52, 9)
+
+            if score > self.best_score:
+                centerText('NEW RECORD', 64, 11)
+        elif self.game_state == 4:
+            pyxel.bltm(0, 0, 1, 0, 0, SCREEN_W, 32)
+            score = 9999
+            centerText('WIN!', 40, 11)
+            centerText(f'SCORE: {score}', 52, 9)
+            if score > self.best_score:
+                centerText('NEW RECORD', 64, 11)
 
     def setMap(self):
         global cur_map
@@ -475,9 +487,11 @@ class App():
 
     def saveScore(self):
         global score
-        with open('score.txt', 'w') as save:
-            save.write(str(score))
-            save.close()
+
+        if score > self.best_score:
+            with open('score.txt', 'w') as save:
+                save.write(str(score))
+                save.close()
 
     def getScore(self):
         try:
@@ -510,7 +524,7 @@ class App():
         cur_map.insert(0, line)
 
     def reset(self):
-        global cur_map
+        global cur_map, score
         tile_y = 3
 
         for y in range(len(cur_map)):
@@ -533,6 +547,7 @@ class App():
         self.ball.resetBall()
         self.paddle.resetPos()
         self.move_ball = False
+        score = 0
 
 
 App()
