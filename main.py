@@ -285,7 +285,11 @@ class App():
             self.game_state = 3
             self.move_ball = False
 
-        if pyxel.btnp(pyxel.KEY_SPACE) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A):
+        if (
+            pyxel.btnp(pyxel.KEY_SPACE) or
+            (pyxel.btnp(pyxel.KEY_RETURN) and self.game_state == 1) or
+            pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A)
+        ):
             if self.game_state == 1:
                 self.reset()
                 self.start_frame = pyxel.frame_count
@@ -310,6 +314,8 @@ class App():
                 self.game_state = 1
                 self.move_ball = False
                 cur_map = []
+
+            return
 
         if self.game_state == 1:
 
