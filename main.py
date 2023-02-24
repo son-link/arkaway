@@ -241,12 +241,14 @@ class App():
         self.paddle = None
         self.ball = None
         self.best_score = 0
+        self.new_best_score = False
 
         # 1: Main Screen. 2: Playing. 3: Game Over. 4: Win screen
         self.game_state = 1
 
         # 1: Normal. 2: Endless
         self.game_mode = 1
+        self.prev_game_mode = 1
         self.move_ball = False
         self.paused = False
         self.level = 1
@@ -291,8 +293,8 @@ class App():
             pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A)
         ):
             if self.game_state == 1:
-                self.reset()
                 self.start_frame = pyxel.frame_count
+                self.reset()
 
                 if self.game_mode == 1:
                     self.level = 2
@@ -312,10 +314,7 @@ class App():
                 self.paddle = None
                 lives = 3
                 self.move_ball = False
-                cur_map = []
                 self.game_state = 1
-
-            return
 
         if self.game_state == 1:
 
@@ -375,11 +374,9 @@ class App():
             if level_complete and self.game_mode == 1 and self.game_state == 2:
                 if self.level < len(self.maps) - 1:
                     self.level += 1
-                    self.reset()
                     self.setMap()
                 else:
                     self.game_state = 4
-                    self.reset()
 
             if self.game_mode == 2 and self.move_ball and not self.paused:
                 if (pyxel.frame_count - self.start_frame) % self.newLineAt == 0:
@@ -388,14 +385,25 @@ class App():
                 if score > 0 and score % 500 == 0 and self.newLineAt > 60:
                     self.newLineAt -= 15
 
+        _best_score = 'normal'
+        if self.game_mode == 2:
+            _best_score = 'endless'
+
         if self.game_state == 3 or self.game_state == 4:
-            self.saveScore()
+            self.prev_game_mode = self.game_mode
+            if score > self.best_score[_best_score]:
+                self.best_score[_best_score] = score
+                self.new_best_score = True
+                self.saveScore()
 
     def draw(self):
         global lives, score
         pyxel.cls(0)
 
         cur_tilemap = 0
+        _best_score = 'normal'
+        if self.game_mode == 2:
+            _best_score = 'endless'
 
         if self.game_state == 1:
             pyxel.bltm(0, 0, 1, 0, 0, SCREEN_W, SCREEN_H)
@@ -433,10 +441,11 @@ class App():
                 pyxel.text(lives_start + 6, 9, f'x{lives}', 10)
 
             pyxel.text(68, 2, 'BEST', 9)
-            if score > self.best_score:
-                self.best_score = score
 
-            pyxel.text(68, 9, str(self.best_score), 10)
+            if score > self.best_score[_best_score]:
+                pyxel.text(68, 9, str(score), 10)
+            else:
+                pyxel.text(68, 9, str(self.best_score[_best_score]), 10)
 
             if self.game_mode == 1:
                 pyxel.text(98, 2, 'LEVEL', 9)
@@ -470,14 +479,15 @@ class App():
             centerText('GAME OVER', 40, 8)
             centerText(f'SCORE: {score}', 52, 9)
 
-            if score > self.best_score:
+            if self.new_best_score:
                 centerText('NEW RECORD', 64, 11)
+
         elif self.game_state == 4:
             pyxel.bltm(0, 0, 1, 0, 0, SCREEN_W, 32)
             score = 9999
             centerText('WIN!', 40, 11)
             centerText(f'SCORE: {score}', 52, 9)
-            if score > self.best_score:
+            if self.new_best_score:
                 centerText('NEW RECORD', 64, 11)
 
     def setMap(self):
@@ -488,15 +498,14 @@ class App():
     def saveScore(self):
         global score
 
-        if score > self.best_score:
-            with open('score.txt', 'w') as save:
-                save.write(str(score))
-                save.close()
+        with open('scores.json', 'w') as save:
+            json.dump(self.best_score, save, sort_keys=True, indent=4)
+            save.close()
 
     def getScore(self):
         try:
-            with open('score.txt', 'r') as f:
-                self.best_score = int(f.readline())
+            with open('scores.json', 'r') as f:
+                self.best_score = json.load(f)
         except FileNotFoundError:
             self.best_score = 0
 
@@ -524,16 +533,16 @@ class App():
         cur_map.insert(0, line)
 
     def reset(self):
-        global cur_map, score
+        global score, cur_map
         tile_y = 3
 
         for y in range(len(cur_map)):
             tile_x = 1
-            if self.game_mode == 2:
+            if self.prev_game_mode == 2:
                 tile_x = 3
 
             for x in range(self.line_len):
-                if self.game_mode == 1:
+                if self.prev_game_mode == 1:
                     pyxel.tilemap(0).pset(x + tile_x, tile_y, (7, 1))
                 else:
                     pyxel.tilemap(2).pset(x + tile_x, tile_y, (7, 1))
@@ -541,13 +550,16 @@ class App():
             tile_y += 1
 
         cur_map = []
+
         self.paddle = Paddle(self.game_mode)
         self.ball = Ball(self.paddle, self.game_mode)
         self.paddle.vel = VELX
         self.ball.resetBall()
         self.paddle.resetPos()
         self.move_ball = False
+        self.new_best_score = False
         score = 0
+        self.getScore()
 
 
 App()

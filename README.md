@@ -25,8 +25,13 @@ Also available on [Itch](https://son-link.itch.io/arkaway)
 ### Main screen
 
 * Select mode: Up/Down arrow key or D-pad
-* Start game: Space key or A button
+* Start game: Space/Return key or A button
+* Close: Q key
 
 ### In game
 * Move: Left/Right arrow key or D-pad
 * Start ball move: Space key or A button
+* Pause/Resume: Return key or Start button
+* Back to main screen (In paused game): Scape key or Back/Select button
+
+*Note:* Saving of high scores does not work in the online version.
