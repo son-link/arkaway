@@ -507,7 +507,12 @@ class App():
             with open('scores.json', 'r') as f:
                 self.best_score = json.load(f)
         except FileNotFoundError:
-            self.best_score = 0
+            self.best_score = {
+                "endless": 0,
+                "normal": 0
+            }
+
+            self.saveScore()
 
     def levelComplete(self):
         global cur_map
