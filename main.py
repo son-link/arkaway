@@ -1,239 +1,20 @@
 import pyxel
 import json
 import copy
+
+from arkaway import globals
+from arkaway.ball import Ball
+from arkaway.paddle import Paddle
 from os import path
 from random import randint
-
-# Constantes del juego
-VELX = 2
-VELY = 2
-COL_TOP = 1
-COL_BOTTOM = 2
-COL_LEFT = 3
-COL_RIGHT = 4
-COL_PADDLE = 5
-SCREEN_W = 120
-SCREEN_H = 160
-
-# Aquí se almacena el mapa actual
-cur_map = []
-score = 0
-game_mode = 1
-lives = 3
 
 
 def centerText(text, posy, color):
     '''Centra un texto en pantalla'''
     pyxel.text(
-        (SCREEN_W / 2) - ((len(text) * 4) / 2),
+        (globals.SCREEN_W / 2) - ((len(text) * 4) / 2),
         posy, text, color
     )
-
-
-class Ball():
-    def __init__(self, paddle, game_mode):
-        self.paddle = paddle
-        self.velx = -VELX
-        self.vely = -VELY
-        self.posx = (SCREEN_W / 2) - 2
-        self.posy = self.paddle.posy - 4
-        self.posxx = self.posx + 4
-        self.posyy = self.posy + 4
-        self.game_mode = game_mode
-
-    def draw(self):
-        pyxel.blt(self.posx, self.posy, 0, 40, 8, 4, 4, 0)
-
-    def update(self):
-        global score, cur_map
-        # Vamos a comprobar si choca contra el pad
-        if (
-            self.posyy >= self.paddle.posy and
-            self.posy < self.paddle.posy + 4 and
-            self.posxx >= self.paddle.posx and
-            self.posx <= self.paddle.posx + (self.paddle.size * 8)
-        ):
-            pyxel.play(0, 0)
-
-            if (
-                self.posxx >= self.paddle.posx and
-                self.posxx <= self.paddle.posx + 8
-            ):
-                self.velx = -VELX
-            elif (
-                self.posx >= self.paddle.posx + 8 and
-                self.posx <= self.paddle.posx + (self.paddle.size * 8)
-            ):
-                self.velx = VELX
-
-            if (
-                self.posxx <= self.paddle.posx + 4 or
-                self.posx >= self.paddle.posx + 12
-            ):
-                self.vely = -1
-            else:
-                self.vely = -VELY
-
-        # Comprobamos si esta llegando a algún sprite
-        cols, tiles = self._checkColDir()
-        if len(cols) > 0:
-            for col in cols:
-                if col == COL_TOP:
-                    if self.vely == 1:
-                        self.vely = -1
-                    else:
-                        self.vely = -VELY
-                if col == COL_BOTTOM:
-                    if self.vely == -1:
-                        self.vely = 1
-                    else:
-                        self.vely = VELY
-                if col == COL_LEFT:
-                    self.velx = -VELX
-                if col == COL_RIGHT:
-                    self.velx = VELX
-
-            for tile in tiles:
-                tile_x, tile_y = tile
-
-                _tile = self._checkTile(tile_x, tile_y)
-                if _tile and _tile[0] >= 1 and _tile[0] < 12 and _tile[1] == 0:
-                    pyxel.play(0, 1)
-                    x = pyxel.floor(tile_x / 8)
-
-                    if self.game_mode == 2:
-                        x -= 2
-
-                    y = pyxel.floor(tile_y / 8)
-                    cur_map[y - 3][x - 1] = 0
-                    score += 10
-                else:
-                    pyxel.play(0, 0)
-
-        self.posx += self.velx
-        self.posxx += self.velx
-        self.posy += self.vely
-        self.posyy += self.vely
-
-    def getPosition(self):
-        return (self.posx, self.posy, self.posxx, self.posyy)
-
-    def setPosition(self, x, y):
-        self.posx = x
-        self.posxx = x + 4
-        self.posy = y
-        self.posyy = y + 4
-
-    def resetBall(self):
-        self.velx = 0 - VELX
-        self.vely = 0 - VELY
-        self.posx = (SCREEN_W / 2) - 2
-        self.posy = self.paddle.posy - 4
-        self.posxx = self.posx + 4
-        self.posyy = self.posy + 4
-
-    def _checkTile(self, posx, posy):
-        tile_x = pyxel.floor(posx / 8)
-        tile_y = pyxel.floor(posy / 8)
-        cur_tilemap = 0
-
-        if self.game_mode == 2:
-            cur_tilemap = 2
-
-        tile = pyxel.tilemap(cur_tilemap).pget(tile_x, tile_y)
-
-        if (
-            (tile[0] == 0 and tile[1] == 0) or
-            (tile[0] == 7 and tile[1] == 1) or
-            (tile[0] == 8 and tile[1] == 1)
-        ):
-            return
-
-        return tile
-
-    def _checkColDir(self):
-        cols = []
-        tiles = []
-        if pyxel.sgn(self.vely) == 1:
-            tile = self._checkTile(self.posx, self.posyy + VELY)
-            if tile:
-                tiles.append([self.posx, self.posyy + VELY])
-                cols.append(COL_TOP)
-
-        if pyxel.sgn(self.vely) == -1:
-            tile = self._checkTile(self.posx, self.posy - VELY)
-            if tile:
-                tiles.append([self.posx, self.posy - VELY])
-                cols.append(COL_BOTTOM)
-
-        if pyxel.sgn(self.velx) == 1:
-            tile = self._checkTile(self.posxx, self.posy)
-            if tile:
-                tiles.append([self.posxx, self.posy])
-                cols.append(COL_LEFT)
-
-        if pyxel.sgn(self.velx) == -1:
-            tile = self._checkTile(self.posx - VELX, self.posy)
-            if tile:
-                tiles.append([self.posx - VELX, self.posy])
-                cols.append(COL_RIGHT)
-
-        return (cols, tiles)
-
-
-class Paddle():
-    def __init__(self, game_mode):
-        self.posx = (SCREEN_W / 2) - 8
-        self.posy = SCREEN_H - 16
-        self.size = 2  # 1: Small, 2: normal, 3: big
-        self.vel = VELX
-        self.game_mode = game_mode
-
-    def draw(self):
-        pyxel.blt(
-            self.posx, self.posy, 0, 32,
-            8 + ((self.size - 1) * 4),
-            8 * self.size,  4, 0
-        )
-
-    def update(self):
-        if (
-            (
-                pyxel.btn(pyxel.KEY_LEFT) or
-                pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT)
-            ) and
-            not self._compCollideWall(self.posx - VELX)
-        ):
-            self.posx -= VELX
-        elif (
-            (
-                pyxel.btn(pyxel.KEY_RIGHT) or
-                pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT)
-            ) and
-            not self._compCollideWall(self.posx + 16)
-        ):
-            self.posx += VELX
-
-    def getPosition(self):
-        return (self.posx, self.posy)
-
-    def resetPos(self):
-        self.posx = (SCREEN_W / 2) - 8
-
-    def _compCollideWall(self, posx):
-        tile_x = pyxel.floor(posx / 8)
-        tile_y = pyxel.floor(self.posy / 8)
-
-        cur_tilemap = 0
-
-        if self.game_mode == 2:
-            cur_tilemap = 2
-
-        tile = pyxel.tilemap(cur_tilemap).pget(tile_x, tile_y)
-        if tile[0] == 3 and tile[1] == 1:
-            return True
-
-        return False
 
 
 class App():
@@ -251,7 +32,7 @@ class App():
         self.prev_game_mode = 1
         self.move_ball = False
         self.paused = False
-        self.level = 1
+        self.level = 0
 
         self.maps = {}
 
@@ -266,24 +47,24 @@ class App():
 
         self.getScore()
 
-        pyxel.init(SCREEN_W, SCREEN_H, title="Arkaway", display_scale=3,
-                   capture_scale=3, capture_sec=20, quit_key=pyxel.KEY_Q)
+        pyxel.init(globals.SCREEN_W, globals.SCREEN_H, title="Arkaway",
+                   display_scale=3, capture_scale=3, capture_sec=20,
+                   quit_key=pyxel.KEY_Q)
         pyxel.load('assets.pyxres')
         pyxel.run(self.update, self.draw)
 
     def update(self):
-        global lives, score, cur_map
 
         # Primero comprobamos si la bola se sale por abajo
         if self.move_ball and not self.paused:
             ballPos = self.ball.getPosition()
-            if ballPos[1] >= SCREEN_H:
-                lives = lives - 1
+            if ballPos[1] >= globals.SCREEN_H:
+                globals.lives -= 1
                 self.ball.resetBall()
                 self.paddle.resetPos()
                 self.move_ball = False
 
-        if lives == 0:
+        if globals.lives == 0:
             self.game_state = 3
             self.move_ball = False
 
@@ -297,7 +78,7 @@ class App():
                 self.reset()
 
                 if self.game_mode == 1:
-                    self.level = 2
+                    self.level = 0
                     self.setMap()
                     self.line_len = 13
                 else:
@@ -312,7 +93,7 @@ class App():
             elif self.game_state == 3 or self.game_state == 4:
                 self.ball = None
                 self.paddle = None
-                lives = 3
+                globals.lives = 3
                 self.move_ball = False
                 self.game_state = 1
 
@@ -379,10 +160,17 @@ class App():
                     self.game_state = 4
 
             if self.game_mode == 2 and self.move_ball and not self.paused:
-                if (pyxel.frame_count - self.start_frame) % self.newLineAt == 0:
+                if (
+                    (pyxel.frame_count - self.start_frame) %
+                    self.newLineAt == 0
+                ):
                     self.genRandLine()
 
-                if score > 0 and score % 500 == 0 and self.newLineAt > 60:
+                if (
+                    globals.score > 0 and
+                    globals.score % 500 == 0 and
+                    self.newLineAt > 60
+                ):
                     self.newLineAt -= 15
 
         _best_score = 'normal'
@@ -391,13 +179,12 @@ class App():
 
         if self.game_state == 3 or self.game_state == 4:
             self.prev_game_mode = self.game_mode
-            if score > self.best_score[_best_score]:
-                self.best_score[_best_score] = score
+            if globals.score > self.best_score[_best_score]:
+                self.best_score[_best_score] = globals.score
                 self.new_best_score = True
                 self.saveScore()
 
     def draw(self):
-        global lives, score
         pyxel.cls(0)
 
         cur_tilemap = 0
@@ -406,44 +193,45 @@ class App():
             _best_score = 'endless'
 
         if self.game_state == 1:
-            pyxel.bltm(0, 0, 1, 0, 0, SCREEN_W, SCREEN_H)
+            pyxel.bltm(0, 0, 1, 0, 0, globals.SCREEN_W, globals.SCREEN_H)
             pyxel.blt(40, self.sel_cur_pos, 0, 40, 8, 4, 4, 0)
             pyxel.text(48, 64, 'Normal', 9)
             pyxel.text(48, 72, 'Endless', 9)
-            centerText('2023 Son Link', SCREEN_H - 24, 7)
-            centerText('Make with   and Pyxel', SCREEN_H - 16, 7)
-            pyxel.blt((SCREEN_W / 2) - 2, SCREEN_H - 16, 0, 49, 9, 5, 5, 0)
+            centerText('2023 Son Link', globals.SCREEN_H - 24, 7)
+            centerText('Make with   and Pyxel', globals.SCREEN_H - 16, 7)
+            pyxel.blt((globals.SCREEN_W / 2) - 2, globals.SCREEN_H - 16,
+                      0, 49, 9, 5, 5, 0)
 
         elif self.game_state == 2:
             tile_y = 3
             tile_x = 1
 
             if self.game_mode == 1:
-                pyxel.bltm(0, 0, 0, 0, 0, SCREEN_W, SCREEN_H)
+                pyxel.bltm(0, 0, 0, 0, 0, globals.SCREEN_W, globals.SCREEN_H)
 
             elif self.game_mode == 2:
-                pyxel.bltm(0, 0, 2, 0, 0, SCREEN_W, SCREEN_H)
+                pyxel.bltm(0, 0, 2, 0, 0, globals.SCREEN_W, globals.SCREEN_H)
                 cur_tilemap = 2
                 tile_x = 3
 
             pyxel.text(2, 2, 'SCORE', 9)
-            pyxel.text(2, 9, str(score), 10)
+            pyxel.text(2, 9, str(globals.score), 10)
 
             pyxel.text(36, 2, 'lives', 9)
             lives_start = 36
 
-            if lives < 5:
-                for i in range(lives):
+            if globals.lives < 5:
+                for i in range(globals.lives):
                     pyxel.blt(lives_start, 9, 0, 49, 9, 5, 5, 0)
                     lives_start += 8
             else:
                 pyxel.blt(lives_start, 9, 0, 49, 9, 5, 5, 0)
-                pyxel.text(lives_start + 6, 9, f'x{lives}', 10)
+                pyxel.text(lives_start + 6, 9, f'x{globals.lives}', 10)
 
             pyxel.text(68, 2, 'BEST', 9)
 
-            if score > self.best_score[_best_score]:
-                pyxel.text(68, 9, str(score), 10)
+            if globals.score > self.best_score[_best_score]:
+                pyxel.text(68, 9, str(globals.score), 10)
             else:
                 pyxel.text(68, 9, str(self.best_score[_best_score]), 10)
 
@@ -451,13 +239,14 @@ class App():
                 pyxel.text(98, 2, 'LEVEL', 9)
                 pyxel.text(98, 9, str(self.level + 1), 10)
 
-            for y in range(len(cur_map)):
+            for y in range(len(globals.cur_map)):
                 for x in range(self.line_len):
-                    sprite = cur_map[y][x]
+                    sprite = globals.cur_map[y][x]
                     if sprite == 0:
                         pyxel.tilemap(cur_tilemap).pset(tile_x, tile_y, (7, 1))
                     else:
-                        pyxel.tilemap(cur_tilemap).pset(tile_x, tile_y, (sprite, 0))
+                        pyxel.tilemap(cur_tilemap).pset(tile_x, tile_y,
+                                                        (sprite, 0))
                     tile_x += 1
 
                 tile_x = 1
@@ -470,34 +259,29 @@ class App():
             self.paddle.draw()
 
             if self.paused:
-                pyxel.rect((SCREEN_W/2) - 20, 56, 40, 16, 0)
+                pyxel.rect((globals.SCREEN_W/2) - 20, 56, 40, 16, 0)
                 centerText('PAUSE', 62, 9)
-                # centerText('Enter/Start: Continue', 58, 9)
 
         elif self.game_state == 3:
-            pyxel.bltm(0, 0, 1, 0, 0, SCREEN_W, 32)
+            pyxel.bltm(0, 0, 1, 0, 0, globals.SCREEN_W, 32)
             centerText('GAME OVER', 40, 8)
-            centerText(f'SCORE: {score}', 52, 9)
+            centerText(f'SCORE: {globals.score}', 52, 9)
 
             if self.new_best_score:
                 centerText('NEW RECORD', 64, 11)
 
         elif self.game_state == 4:
-            pyxel.bltm(0, 0, 1, 0, 0, SCREEN_W, 32)
-            score = 9999
+            pyxel.bltm(0, 0, 1, 0, 0, globals.SCREEN_W, 32)
             centerText('WIN!', 40, 11)
-            centerText(f'SCORE: {score}', 52, 9)
+            centerText(f'SCORE: {globals.score}', 52, 9)
             if self.new_best_score:
                 centerText('NEW RECORD', 64, 11)
 
     def setMap(self):
-        global cur_map
-        cur_map = copy.deepcopy(self.maps[self.level])
-        self.ball.cur_map = cur_map
+        globals.cur_map = copy.deepcopy(self.maps[self.level])
+        self.ball.cur_map = globals.cur_map
 
     def saveScore(self):
-        global score
-
         with open('scores.json', 'w') as save:
             json.dump(self.best_score, save, sort_keys=True, indent=4)
             save.close()
@@ -515,12 +299,11 @@ class App():
             self.saveScore()
 
     def levelComplete(self):
-        global cur_map
         no_empty_tiles = 0
 
-        for y in range(len(cur_map)):
+        for y in range(len(globals.cur_map)):
             for x in range(self.line_len):
-                sprite = cur_map[y][x]
+                sprite = globals.cur_map[y][x]
                 if sprite > 0 and sprite < 12:
                     no_empty_tiles += 1
 
@@ -529,19 +312,17 @@ class App():
         return True
 
     def genRandLine(self):
-        global cur_map
         line = []
 
         for x in range(9):
             line.append(randint(1, 11))
 
-        cur_map.insert(0, line)
+        globals.cur_map.insert(0, line)
 
     def reset(self):
-        global score, cur_map
         tile_y = 3
 
-        for y in range(len(cur_map)):
+        for y in range(len(globals.cur_map)):
             tile_x = 1
             if self.prev_game_mode == 2:
                 tile_x = 3
@@ -554,16 +335,16 @@ class App():
 
             tile_y += 1
 
-        cur_map = []
+        globals.cur_map = []
 
         self.paddle = Paddle(self.game_mode)
         self.ball = Ball(self.paddle, self.game_mode)
-        self.paddle.vel = VELX
+        self.paddle.vel = globals.VELX
         self.ball.resetBall()
         self.paddle.resetPos()
         self.move_ball = False
         self.new_best_score = False
-        score = 0
+        globals.score = 0
         self.getScore()
 
 

@@ -3,7 +3,7 @@
 if [ ! -d package ]; then mkdir package; fi
 
 echo "Prepare the package"
-cp main.py assets.pyxres maps.json package
+cp -r main.py assets.pyxres maps.json arkaway package
 cd package
 pyxel package . main.py
 mv package.pyxapp ../arkaway.pyxapp
