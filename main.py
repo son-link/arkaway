@@ -135,6 +135,7 @@ class App():
                     pyxel.btn(pyxel.GAMEPAD1_BUTTON_BACK)
                 )
             ):
+                self.prev_game_mode = self.game_mode
                 self.level = 0
                 self.reset()
                 self.game_mode = 1
